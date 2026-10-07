@@ -170,11 +170,17 @@ def row_status(db,student_id,day, options=None):
 @login_required
 def home():
     day=validate_day(request.args.get("day",now_wib().date().isoformat()))
-    class_name=request.args.get("class","")
+    class_name=request.args.get("class","").strip()
+    query=request.args.get("q","").strip()
+    if len(query)>100 or len(class_name)>80:
+        abort(400,"Filter terlalu panjang")
+    search_pattern="%"+query+"%"
     with connect() as db:
         opts=cfg(db)
         classes=[r[0] for r in db.execute("SELECT DISTINCT class_name FROM students WHERE active=1 ORDER BY class_name")]
-        students=db.execute("SELECT * FROM students WHERE active=1 AND (?='' OR class_name=?) ORDER BY class_name,name",(class_name,class_name)).fetchall()
+        students=db.execute("""SELECT * FROM students WHERE active=1 AND (?='' OR class_name=?)
+            AND (?='' OR name LIKE ? OR nipd LIKE ? OR nisn LIKE ?)
+            ORDER BY class_name,name""",(class_name,class_name,query,search_pattern,search_pattern,search_pattern)).fetchall()
         items=[]
         counters={"Tepat Waktu":0,"Terlambat":0,"Ijin":0,"Sakit":0,"Alpa":0,"Belum Absen":0,"Libur":0}
         for student in students:
@@ -184,7 +190,22 @@ def home():
         recent=db.execute("""SELECT a.*,s.name,s.class_name FROM attendance a JOIN students s ON s.id=a.student_id
         WHERE a.day=? ORDER BY a.created_at DESC LIMIT 20""",(day,)).fetchall()
     return render_template("index.html",items=items,counts=counters,day=day,classes=classes,
-                           class_name=class_name,options=opts,recent=recent)
+                           class_name=class_name,query=query,options=opts,recent=recent)
+
+@app.get("/classes")
+@login_required
+def classes():
+    with connect() as db:
+        rows=db.execute("""SELECT class_name,COUNT(*) as total FROM students
+            WHERE active=1 GROUP BY class_name ORDER BY class_name""").fetchall()
+    return render_template("classes.html",classes=rows)
+
+@app.get("/cards")
+@login_required
+def cards():
+    with connect() as db:
+        rows=db.execute("""SELECT * FROM students WHERE active=1 ORDER BY class_name,name""").fetchall()
+    return render_template("cards.html",students=rows)
 
 @app.route("/students",methods=["GET","POST"])
 @login_required
