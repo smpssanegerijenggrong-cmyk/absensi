@@ -108,7 +108,12 @@ def login_required(fn):
     @wraps(fn)
     def wrapped(*args,**kwargs):
         if not session.get("admin"):
-            return redirect(url_for("login"))
+            # Public demo navigation on Vercel contains NO real student records.
+            # Mutations are blocked globally because /tmp is not persistent.
+            preview_pages = {"home", "students", "classes", "cards", "scan", "report"}
+            if not (IS_VERCEL and request.method == "GET"
+                    and request.endpoint in preview_pages):
+                return redirect(url_for("login"))
         return fn(*args,**kwargs)
     return wrapped
 
@@ -630,7 +635,9 @@ def backup_drive():
 
 @app.get("/health")
 def health():
-    return {"status":"ok","app":"SANJARA ABSENSI"}
+    return {"status":"ok","app":"SANJARA HADIR",
+            "mode":"vercel-read-only-preview" if IS_VERCEL else "server",
+            "persistent_storage":not IS_VERCEL}
 
 if __name__=="__main__":
     app.run(host="0.0.0.0",port=int(os.getenv("PORT",5000)),debug=False)
