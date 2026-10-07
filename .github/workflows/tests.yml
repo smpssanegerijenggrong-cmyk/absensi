@@ -12,3 +12,16 @@ jobs:
           python-version: '3.12'
       - run: pip install -r requirements.txt
       - run: pytest -q
+      - name: Smoke test Vercel runtime import and dashboard
+        env:
+          VERCEL: '1'
+        run: |
+          python - <<'PY'
+          import app
+          assert str(app.DB_PATH).startswith('/tmp/')
+          client = app.app.test_client()
+          assert client.get('/health').json['persistent_storage'] is False
+          assert client.get('/').status_code == 200
+          assert b'PRATINJAU VERCEL' in client.get('/').data
+          print('Vercel runtime preview smoke test passed')
+          PY

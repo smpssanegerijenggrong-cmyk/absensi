@@ -25,7 +25,7 @@
     <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol>
     <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2 2-.06-.06A1.65 1.65 0 0 0 15.9 18.5a1.65 1.65 0 0 0-1 1.51V21h-3v-.99A1.65 1.65 0 0 0 10.2 18.5a1.65 1.65 0 0 0-1.82.33l-.06.06-2-2 .06-.06A1.65 1.65 0 0 0 6.7 15a1.65 1.65 0 0 0-1.51-1H4v-3h1.19A1.65 1.65 0 0 0 6.7 10a1.65 1.65 0 0 0-.33-1.82L6.3 8.1l2-2 .06.06A1.65 1.65 0 0 0 10.2 6.5a1.65 1.65 0 0 0 1.51-1V4h3v1.5A1.65 1.65 0 0 0 15.9 6.5a1.65 1.65 0 0 0 1.82-.33l.06-.06 2 2-.06.06A1.65 1.65 0 0 0 19.4 10a1.65 1.65 0 0 0 1.51 1H22v3h-1.09A1.65 1.65 0 0 0 19.4 15z"/></symbol>
   </svg>
-  {% if session.get('admin') %}
+  {% if session.get('admin') or (deployment_preview and request.endpoint != 'login') %}
   <div class="app-shell">
     <aside class="sidebar" id="sidebar" aria-label="Menu utama">
       <a class="sidebar-brand" href="{{ url_for('home') }}" aria-label="SANJARA HADIR">
@@ -46,7 +46,7 @@
       <div class="sidebar-bottom">
         <a class="side-settings {{ 'active' if request.endpoint=='settings' else '' }}" href="{{ url_for('settings') }}"><svg><use href="#i-settings"/></svg>Pengaturan sekolah</a>
         <div class="sidebar-note"><svg><use href="#i-shield"/></svg><b>Satu murid, satu kehadiran</b><p>Scan kartu QR murid di sekolah. Kehadiran langsung masuk rekap.</p></div>
-        <div class="profile"><span class="avatar">G</span><div><b>Guru / Operator</b><small>Ruang pengelolaan</small></div><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button type="submit" class="exit-btn" aria-label="Keluar">Keluar</button></form></div>
+        <div class="profile"><span class="avatar">G</span><div><b>Guru / Operator</b><small>Ruang pengelolaan</small></div>{% if session.get('admin') %}<form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button type="submit" class="exit-btn" aria-label="Keluar">Keluar</button></form>{% else %}<a class="btn secondary" href="{{ url_for('login') }}" style="font-size:11px">Login</a>{% endif %}</div>
       </div>
     </aside>
     <div class="main-shell">
@@ -55,12 +55,12 @@
         <div class="breadcrumb">Ruang Sekolah <span>/</span> <b>{% block crumb %}Ringkasan{% endblock %}</b></div>
         <div class="header-status"><i></i> Sistem absensi <span class="avatar">G</span></div>
       </header>
-      <main class="content">{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ 'error' if category=='error' else '' }}" role="status">{{ message }}</div>{% endfor %}{% block body %}{% endblock %}</main>
+      <main class="content">{% if deployment_preview %}<div class="flash error" role="status"><strong>PRATINJAU VERCEL — Hanya untuk melihat tampilan.</strong> Data siswa, scan QR, izin/sakit, dan rekap tidak disimpan. Untuk penggunaan resmi perlu database dan penyimpanan berkas permanen.</div>{% endif %}{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ 'error' if category=='error' else '' }}" role="status">{{ message }}</div>{% endfor %}{% block body %}{% endblock %}</main>
       <footer class="app-footer"><span><svg><use href="#i-check-check"/></svg> SANJARA HADIR</span><span>Dibuat untuk kehadiran yang lebih bermakna.</span></footer>
     </div>
   </div>
   {% else %}
-    <main class="login-container">{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ 'error' if category=='error' else '' }}">{{ message }}</div>{% endfor %}{% block login_body %}{% endblock %}</main>
+    <main class="login-container"><div>{% if deployment_preview %}<div class="flash error">Pratinjau Vercel: penyimpanan data tidak aktif. <a href="{{ url_for('home') }}">Lihat dashboard</a>.</div>{% endif %}{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ 'error' if category=='error' else '' }}">{{ message }}</div>{% endfor %}{% block login_body %}{% endblock %}</div></main>
   {% endif %}
   <script>
   (function(){
