@@ -15,6 +15,15 @@ Aplikasi absensi QR Code siswa SMP SSA Negeri Jenggrong Ranuyoso. **Repository i
 - Monitoring kelas, rekap bulanan, ekspor Excel dengan header persis seperti contoh: **No, NIPD, NISN, NAMA, JENIS KELAMIN, KELAS, SAKIT, IJIN, ALPA, JUMLAH (SAKIT/IJIN/ALPA)**.
 - Rekap detail waktu scan di sheet Excel terpisah, unduh arsip cadangan ZIP dan backup ke Google Drive melalui service account bila dikonfigurasi.
 
+## Pratinjau Vercel (tanpa menyimpan data)
+
+Aplikasi Flask pada repository ini kini dapat ditampilkan di Vercel sebagai **demo baca-saja**. Vercel akan menggunakan penyimpanan `/tmp` sementara untuk inisialisasi database kosong sehingga fungsi tidak gagal saat startup, tetapi **semua operasi penulisan absensi dan data siswa ditolak** agar tidak terjadi kehilangan data.
+
+- Panduan pengaturan Vercel, deploy dan troubleshooting: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
+- `/` = dashboard pratinjau publik dengan desain SANJARA HADIR.
+- `/health` = status runtime dan `persistent_storage: false` pada Vercel.
+- Untuk pemakaian absensi resmi, deploy dengan storage permanen atau migrasikan ke database PostgreSQL terkelola dan penyimpanan surat privat.
+
 ## Jalankan
 Python 3.11+ direkomendasikan.
 ```bash
