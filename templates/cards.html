@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block crumb %}ID card siswa{% endblock %}
+{% block body %}
+<div class="heading"><div><div class="eyebrow">SANJARA HADIR</div><h1>ID card siswa</h1><p>Setiap murid memiliki QR unik. Pilih kartu untuk dicetak.</p></div><a class="btn secondary" href="{{ url_for('students') }}">Data siswa</a></div>
+<div class="grid">{% for s in students %}
+  <div class="card"><div class="muted">SANJARA HADIR · {{ s.class_name }}</div><h2 style="margin:12px 0 5px">{{ s.name }}</h2><p class="muted">NIPD: {{ s.nipd or '—' }} · NISN: {{ s.nisn or '—' }}</p><a class="btn" href="{{ url_for('student_card',student_id=s.id) }}">Buka &amp; cetak QR</a></div>
+{% else %}<div class="card" style="grid-column:1/-1"><h2>Belum ada murid aktif</h2><p class="muted">Silakan impor data murid untuk membuat ID card.</p><a class="btn" href="{{ url_for('students') }}">Impor siswa</a></div>{% endfor %}</div>
+{% endblock %}
