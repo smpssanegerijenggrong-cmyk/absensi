@@ -1,1 +1,80 @@
-{% extends "base.html" %}{% block body %}<div class="card"><h1 class="title">Monitoring Kehadiran Siswa</h1><p class="muted">Absensi QR otomatis dengan batas <strong>{{ options.cutoff }} WIB</strong>. Scan setelah batas waktu tercatat <strong>TERLAMBAT</strong>, bukan ALPA.</p><form method="get" class="formgrid"><div><label>Tanggal</label><input name="day" type="date" value="{{ day }}"></div><div><label>Kelas</label><select name="class"><option value="">Semua kelas</option>{% for k in classes %}<option value="{{ k }}" {{ 'selected' if class_name==k else '' }}>{{ k }}</option>{% endfor %}</select></div><div style="align-self:end"><button>Tampilkan</button></div></form></div><div class="grid"><div class="card"><div class="kpi">{{ counts['Tepat Waktu'] }}</div><div class="kpi-label">✓ Tepat Waktu</div></div><div class="card"><div class="kpi" style="color:#bb7b08">{{ counts['Terlambat'] }}</div><div class="kpi-label">◷ Terlambat</div></div><div class="card"><div class="kpi">{{ counts['Ijin']+counts['Sakit'] }}</div><div class="kpi-label">▤ Izin / Sakit</div></div><div class="card"><div class="kpi" style="color:#ad324a">{{ counts['Alpa']+counts['Belum Absen'] }}</div><div class="kpi-label">– Alpa / Belum Absen</div></div></div><div class="card"><div class="actions" style="margin-top:0"><a class="btn" href="{{ url_for('scan') }}">▦ Buka Scanner QR</a><a class="btn secondary" href="{{ url_for('export_report',month=day[:7],day=day,class=class_name) }}">↓ Download Excel</a></div></div><div class="card"><h2>Daftar Kehadiran · {{ day }}</h2><div class="tablebox"><table><thead><tr><th>No</th><th>NIPD</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Jam Scan WIB</th><th>Status</th><th>Terlambat</th></tr></thead><tbody>{% for item in items %}<tr><td>{{ loop.index }}</td><td>{{ item.student.nipd }}</td><td>{{ item.student.nisn }}</td><td>{{ item.student.name }}</td><td>{{ item.student.class_name }}</td><td>{{ item.attendance.scanned_at or '—' }}</td><td><span class="tag {{ 'late' if item.attendance.status=='Terlambat' else 'miss' if item.attendance.status in ('Alpa','Belum Absen') else '' }}">{{ item.attendance.status }}</span></td><td>{% if item.attendance.late_seconds %}{{ item.attendance.late_seconds//60 }} menit {{ item.attendance.late_seconds%60 }} detik{% else %}—{% endif %}</td></tr>{% else %}<tr><td colspan="8">Belum ada siswa. Impor data siswa terlebih dahulu.</td></tr>{% endfor %}</tbody></table></div></div><div class="card"><h2>20 Scan QR Terbaru · {{ day }}</h2><div class="tablebox"><table><thead><tr><th>Nama</th><th>Kelas</th><th>Jam</th><th>Status</th></tr></thead><tbody>{% for a in recent %}<tr><td>{{ a.name }}</td><td>{{ a.class_name }}</td><td>{{ a.scanned_at or '—' }}</td><td>{{ a.status }}</td></tr>{% else %}<tr><td colspan="4">Belum ada catatan.</td></tr>{% endfor %}</tbody></table></div></div>{% endblock %}
+{% extends "base.html" %}
+{% block crumb %}Ringkasan{% endblock %}
+{% block body %}
+<div class="work-dashboard">
+  <div class="heading">
+    <div><div class="eyebrow">SANJARA HADIR</div><h1>Selamat datang, Bapak/Ibu Guru.</h1><p>Setiap kehadiran, awal sebuah pembelajaran.</p></div>
+    <div class="date-chip"><svg><use href="#i-calendar"/></svg> {{ day }} · WIB</div>
+  </div>
+  {% if not options.latitude or not options.longitude %}
+  <div class="location-banner">
+    <div><b>Lokasi sekolah belum diatur</b><p>Atur titik sekolah dahulu. Absensi hadir dikunci sampai lokasi tersimpan.</p><small>Lokasi diperiksa dari perangkat yang digunakan untuk absensi.</small></div>
+    <a class="btn secondary" href="{{ url_for('settings') }}">Lokasi sekolah</a>
+  </div>
+  {% else %}
+  <div class="location-banner bnr-ready">
+    <div><b>Lokasi sekolah sudah diatur</b><p>Absensi diproses dari radius {{ options.radius_m }} meter di sekitar sekolah.</p><small>Batas tepat waktu: {{ options.cutoff }} WIB · setelah batas ini berstatus Terlambat.</small></div>
+    <a class="btn secondary" href="{{ url_for('settings') }}">Ubah lokasi</a>
+  </div>
+  {% endif %}
+  <section class="hero">
+    <div class="hero-copy"><div class="hero-tag"><span></span> SIAP UNTUK HARI INI</div>
+      <h2>Hadir lebih mudah.<br>Belajar lebih semangat.</h2>
+      <p>Scan kartu QR di lokasi sekolah.<br> Kehadiran otomatis tercatat dan terekap.</p>
+      <a class="light-btn" href="{{ url_for('scan') }}">Mulai absensi <svg><use href="#i-right"/></svg></a>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="orbit"></div><div class="orbit orbit-two"></div>
+      <div class="id-card">
+        <div class="card-brand"><svg><use href="#i-check-check"/></svg> SANJARA HADIR</div>
+        <div class="illustration-avatar"><svg><use href="#i-school"/></svg></div>
+        <div class="mock-line"></div><div class="mock-line short"></div>
+        <svg class="illustration-qr"><use href="#i-qr"/></svg>
+      </div>
+      <div class="floating-check"><svg><use href="#i-check-check"/></svg><div><b>Kehadiran tercatat</b><small>Siap untuk belajar!</small></div></div>
+      <div class="spark">✦</div>
+    </div>
+  </section>
+  <section class="stats" aria-label="Statistik kehadiran">
+    <div class="stat"><div><span>Total murid</span><strong>{{ items|length }}</strong><small>Murid terdaftar pada filter</small></div><span class="stat-icon blue"><svg><use href="#i-users"/></svg></span></div>
+    <div class="stat"><div><span>Hadir hari ini</span><strong>{{ counts['Tepat Waktu']+counts['Terlambat'] }}</strong><small>{{ counts['Tepat Waktu'] }} tepat waktu · {{ counts['Terlambat'] }} terlambat</small></div><span class="stat-icon green"><svg><use href="#i-check-check"/></svg></span></div>
+    <div class="stat"><div><span>Izin / Sakit</span><strong>{{ counts['Ijin']+counts['Sakit'] }}</strong><small>Dengan keterangan</small></div><span class="stat-icon amber"><svg><use href="#i-clipboard"/></svg></span></div>
+    <div class="stat"><div><span>Belum tercatat</span><strong>{{ counts['Belum Absen']+counts['Alpa'] }}</strong><small>{{ counts['Alpa'] }} murid tercatat alpa</small></div><span class="stat-icon gray"><svg><use href="#i-clock"/></svg></span></div>
+  </section>
+  <div class="section-heading"><h2>Mulai catat kehadiran</h2><span>Scan QR, kehadiran langsung tercatat</span></div>
+  <section class="methods">
+    <a class="method" href="{{ url_for('scan') }}">
+      <span class="method-icon"><svg><use href="#i-qr"/></svg></span>
+      <div><h3>Scan kartu QR <span>CEPAT &amp; PRAKTIS</span></h3><p>Arahkan kartu QR murid ke kamera perangkat.</p></div>
+      <svg class="method-arrow"><use href="#i-right"/></svg>
+    </a>
+  </section>
+  <section class="panel" aria-label="Daftar kehadiran siswa">
+    <div class="panel-top"><div><h2>Kehadiran hari ini</h2><p>Data kehadiran tersimpan otomatis setelah berhasil dicatat.</p></div><a class="btn secondary" href="{{ url_for('leave') }}">+ Izin / Sakit / Alpa</a></div>
+    <form class="filters" method="get" action="{{ url_for('home') }}">
+      <label class="search"><input name="q" type="search" value="{{ query }}" placeholder="Cari nama atau NIS murid..." aria-label="Cari murid"></label>
+      <select name="class" aria-label="Filter kelas"><option value="">Semua kelas</option>{% for k in classes %}<option value="{{ k }}" {{ 'selected' if class_name==k else '' }}>{{ k }}</option>{% endfor %}</select>
+      <input type="date" name="day" value="{{ day }}" aria-label="Tanggal kehadiran" style="max-width:170px">
+      <button type="submit" class="secondary">Tampilkan</button>
+      <a href="{{ url_for('export_report',month=day[:7],day=day,class=class_name) }}" class="btn secondary">↓ Excel</a>
+    </form>
+    <div class="tablebox">
+    <table>
+      <thead><tr><th>MURID</th><th>KELAS</th><th>STATUS</th><th>WAKTU (WIB)</th><th>METODE</th><th>KETERANGAN / BUKTI</th></tr></thead>
+      <tbody>{% for item in items %}
+        <tr>
+          <td><strong>{{ item.student.name }}</strong><div class="muted">NIPD: {{ item.student.nipd or '—' }} · NISN: {{ item.student.nisn or '—' }}</div></td>
+          <td>{{ item.student.class_name }}</td>
+          <td><span class="tag {{ 'late' if item.attendance.status=='Terlambat' else 'miss' if item.attendance.status in ('Alpa','Belum Absen') else '' }}">{{ item.attendance.status }}</span></td>
+          <td>{{ item.attendance.scanned_at or '—' }}</td>
+          <td>{{ item.attendance.get('source') or '—' }}</td>
+          <td>{% if item.attendance.late_seconds %}Terlambat {{ item.attendance.late_seconds//60 }} menit {{ item.attendance.late_seconds%60 }} detik{% elif item.attendance.status in ('Ijin','Sakit') %}Surat disetujui{% elif item.attendance.status=='Tepat Waktu' %}Hadir sebelum/sampai {{ options.cutoff }} WIB{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}</tbody>
+    </table>
+    </div>
+    {% if not items %}<div class="empty"><span class="empty-symbol"><svg><use href="#i-users"/></svg></span><h3>Belum ada data murid</h3><p>Impor siswa melalui menu Data siswa, atau ubah filter pencarian.</p><a class="btn secondary" href="{{ url_for('students') }}">Kelola data siswa</a></div>{% endif %}
+    <div class="table-foot"><span>{{ items|length }} murid</span><span><span class="tiny-dot"></span> Waktu Indonesia Barat · Batas {{ options.cutoff }}</span></div>
+  </section>
+</div>
+{% endblock %}
