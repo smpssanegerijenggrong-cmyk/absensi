@@ -90,3 +90,10 @@ def test_csrf_and_no_default_access():
     anonymous=mod.app.test_client()
     assert anonymous.get("/students").status_code==302
     assert anonymous.get("/backup.zip").status_code==302
+
+def test_all_pages_render():
+    c=logged_client()
+    for route in ["/","/students","/scan","/leave","/report","/settings"]:
+        response=c.get(route)
+        assert response.status_code==200,(route,response.status_code,response.data[:350])
+        assert b"SANJARA" in response.data
