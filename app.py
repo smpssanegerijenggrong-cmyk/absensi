@@ -20,15 +20,21 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 TZ = ZoneInfo("Asia/Jakarta")
+# Vercel Functions have a read-only project filesystem. /tmp is writable, but
+# non-persistent: it must NEVER be used to collect real student attendance.
+IS_VERCEL = bool(os.getenv("VERCEL") or os.getenv("VERCEL_ENV"))
+RUNTIME_DIR = "/tmp/sanjara-preview" if IS_VERCEL else "data"
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY") or secrets.token_hex(32)
 app.config.update(
     MAX_CONTENT_LENGTH=8 * 1024 * 1024,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.getenv("COOKIE_SECURE", "0") == "1",
-    DATABASE_PATH=os.getenv("DATABASE_PATH", "data/absensi.sqlite3"),
-    UPLOAD_DIR=os.getenv("UPLOAD_DIR", "data/surat"),
+    SESSION_COOKIE_SECURE=IS_VERCEL or os.getenv("COOKIE_SECURE", "0") == "1",
+    DATABASE_PATH=(f"{RUNTIME_DIR}/absensi.sqlite3" if IS_VERCEL
+                   else os.getenv("DATABASE_PATH", "data/absensi.sqlite3")),
+    UPLOAD_DIR=(f"{RUNTIME_DIR}/surat" if IS_VERCEL
+                else os.getenv("UPLOAD_DIR", "data/surat")),
 )
 DB_PATH = Path(app.config["DATABASE_PATH"])
 UPLOAD_DIR = Path(app.config["UPLOAD_DIR"])
@@ -113,11 +119,17 @@ def csrf_guard():
     if request.method in ("POST","PUT","PATCH","DELETE") and request.endpoint != "static":
         if not secrets.compare_digest(request.form.get("_csrf",""), session["_csrf"]):
             abort(400,"CSRF token invalid")
+        # In the serverless preview, changing data would create an illusion of
+        # successful attendance recording even though /tmp can disappear.
+        # Authentication/session actions are safe to permit for layout preview.
+        if IS_VERCEL and request.endpoint not in ("login", "logout"):
+            abort(503, "Mode pratinjau Vercel: penyimpanan permanen belum terpasang. "
+                       "Absensi, data siswa, dan surat izin tidak dapat disimpan di sini.")
 
 @app.context_processor
 def inject_common():
     return {"csrf":session.get("_csrf",""), "today":now_wib().date().isoformat(),
-            "school_name":"SANJARA ABSENSI"}
+            "school_name":"SANJARA ABSENSI", "deployment_preview":IS_VERCEL}
 
 @app.route("/login",methods=["GET","POST"])
 def login():
