@@ -123,3 +123,33 @@ def test_login_still_renders():
     response=client.get("/login")
     assert response.status_code==200
     assert b'Masuk ke ruang sekolah' in response.data
+
+def test_vercel_preview_is_public_and_read_only(monkeypatch):
+    monkeypatch.setattr(mod, "IS_VERCEL", True)
+    client = mod.app.test_client()
+    page = client.get("/")
+    assert page.status_code == 200
+    assert b"PRATINJAU VERCEL" in page.data
+    assert b"SANJARA" in page.data
+    assert client.get("/classes").status_code == 200
+    assert client.get("/cards").status_code == 200
+    assert client.get("/report").status_code == 200
+    assert client.get("/settings").status_code == 302
+    assert client.get("/login").status_code == 200
+    payload = {"_csrf": csrf(client), "name": "ShouldNotBeSaved",
+               "gender": "L", "class_name": "VII A"}
+    denied = client.post("/students", data=payload)
+    assert denied.status_code == 503
+    health = client.get("/health").json
+    assert health["mode"] == "vercel-read-only-preview"
+    assert health["persistent_storage"] is False
+
+
+def test_vercel_configuration_is_valid():
+    import json
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent
+    config = json.loads((root/"vercel.json").read_text(encoding="utf-8"))
+    assert "app.py" in config["functions"]
+    assert (root/"public/static/style.css").is_file()
+    assert (root/"public/static/work.css").is_file()
