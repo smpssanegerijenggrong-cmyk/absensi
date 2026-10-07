@@ -1,0 +1,13 @@
+services:
+  absensi:
+    build: .
+    ports:
+      - '5000:5000'
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/data/absensi.sqlite3
+      UPLOAD_DIR: /app/data/surat
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
