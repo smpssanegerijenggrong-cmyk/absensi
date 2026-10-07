@@ -1,1 +1,16 @@
-{% extends "base.html" %}{% block title %}Login · SANJARA{% endblock %}{% block body %}<div class="card" style="max-width:430px;margin:60px auto"><h1 class="title">Masuk sebagai Admin</h1><p class="muted">Akses petugas sekolah untuk pencatatan QR, data siswa, dan laporan.</p><form method="post"><input type="hidden" name="_csrf" value="{{ csrf }}"><label>Username</label><input name="username" autocomplete="username" required><label>Password</label><input name="password" type="password" autocomplete="current-password" required><div class="actions"><button type="submit" style="width:100%">Masuk ke Dashboard</button></div></form></div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Masuk · SANJARA HADIR{% endblock %}
+{% block login_body %}
+<div class="card" style="max-width:445px">
+  <div class="login-logo">✓✓</div>
+  <div class="eyebrow" style="text-align:center">SANJARA HADIR · SCHOOL EDITION</div>
+  <h1 class="title" style="text-align:center;margin-top:10px">Selamat datang, Bapak/Ibu Guru.</h1>
+  <p class="muted" style="text-align:center">Setiap kehadiran, awal sebuah pembelajaran.<br>Masuk ke ruang pengelolaan sekolah.</p>
+  <form method="post"><input type="hidden" name="_csrf" value="{{ csrf }}">
+    <label>Username</label><input name="username" autocomplete="username" required>
+    <label>Password</label><input name="password" type="password" autocomplete="current-password" required>
+    <div class="actions"><button type="submit" style="width:100%;margin-top:12px">Masuk ke ruang sekolah →</button></div>
+  </form>
+  <p class="muted" style="margin-top:18px;text-align:center">SMP SSA Negeri Jenggrong Ranuyoso</p>
+</div>
+{% endblock %}
