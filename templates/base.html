@@ -1,1 +1,76 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#103a40"><title>{% block title %}SANJARA ABSENSI{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head><body><header class="top"><div class="wrap"><div><div class="brand">◈ SANJARA ABSENSI</div><div class="sub">SMP SSA Negeri Jenggrong Ranuyoso · Sistem Kehadiran Digital</div></div>{% if session.get('admin') %}<nav class="nav"><a href="{{ url_for('home') }}">Dashboard</a><a href="{{ url_for('scan') }}">Scan QR</a><a href="{{ url_for('students') }}">Siswa & ID Card</a><a href="{{ url_for('leave') }}">Surat Izin</a><a href="{{ url_for('report') }}">Rekap Excel</a><a href="{{ url_for('settings') }}">Pengaturan</a><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="secondary" style="min-height:28px;padding:5px 10px">Keluar</button></form></nav>{% endif %}</div></header><main class="wrap">{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ 'error' if category=='error' else '' }}">{{ message }}</div>{% endfor %}{% block body %}{% endblock %}</main><footer class="foot">SANJARA ABSENSI · Waktu server WIB (Asia/Jakarta) · Data tersimpan di server sekolah</footer></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b655f">
+  <title>{% block title %}SANJARA Hadir — Absensi Murid{% endblock %}</title>
+  <meta name="description" content="Setiap kehadiran, awal sebuah pembelajaran.">
+  <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='work.css') }}">
+</head>
+<body class="sanjara-app">
+  <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-check-check" viewBox="0 0 24 24"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></symbol>
+    <symbol id="i-school" viewBox="0 0 24 24"><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M18 4.933V21M4 6l7.106-3.79a2 2 0 0 1 1.788 0L20 6M6 11l-3.52 2.147A1 1 0 0 0 2 14v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a1 1 0 0 0-.48-.853L18 11M6 4.933V21"/><circle cx="12" cy="9" r="2"/></symbol>
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3.128a4 4 0 0 1 0 7.744M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
+    <symbol id="i-contact" viewBox="0 0 24 24"><path d="M16 2v2M7 21v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M8 2v2"/><circle cx="12" cy="10" r="3"/><rect x="3" y="3" width="18" height="18" rx="2"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5M10 9H8M16 13H8M16 17H8"/></symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v3M16 2v3M3 9h18M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01"/><rect x="3" y="3" width="18" height="18" rx="2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2 2-.06-.06A1.65 1.65 0 0 0 15.9 18.5a1.65 1.65 0 0 0-1 1.51V21h-3v-.99A1.65 1.65 0 0 0 10.2 18.5a1.65 1.65 0 0 0-1.82.33l-.06.06-2-2 .06-.06A1.65 1.65 0 0 0 6.7 15a1.65 1.65 0 0 0-1.51-1H4v-3h1.19A1.65 1.65 0 0 0 6.7 10a1.65 1.65 0 0 0-.33-1.82L6.3 8.1l2-2 .06.06A1.65 1.65 0 0 0 10.2 6.5a1.65 1.65 0 0 0 1.51-1V4h3v1.5A1.65 1.65 0 0 0 15.9 6.5a1.65 1.65 0 0 0 1.82-.33l.06-.06 2 2-.06.06A1.65 1.65 0 0 0 19.4 10a1.65 1.65 0 0 0 1.51 1H22v3h-1.09A1.65 1.65 0 0 0 19.4 15z"/></symbol>
+  </svg>
+  {% if session.get('admin') %}
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Menu utama">
+      <a class="sidebar-brand" href="{{ url_for('home') }}" aria-label="SANJARA HADIR">
+        <span class="brand-symbol"><svg><use href="#i-check-check"/></svg></span>
+        <span class="brand-name">SANJARA<span class="brand-sub">HADIR · SCHOOL EDITION</span></span>
+      </a>
+      <div class="workspace"><span class="school-icon"><svg><use href="#i-school"/></svg></span><div><b>Ruang Sekolah</b><small>Absensi murid</small></div><span class="online" aria-label="Sistem aktif"></span></div>
+      <div class="nav-label">MENU UTAMA</div>
+      <nav class="side-nav">
+        <a class="{{ 'active' if request.endpoint=='home' else '' }}" href="{{ url_for('home') }}"><svg><use href="#i-dashboard"/></svg>Ringkasan</a>
+        <a class="{{ 'active' if request.endpoint=='scan' else '' }}" href="{{ url_for('scan') }}"><svg><use href="#i-qr"/></svg>Absensi harian</a>
+        <a class="{{ 'active' if request.endpoint in ('students','import_students','student_card') else '' }}" href="{{ url_for('students') }}"><svg><use href="#i-users"/></svg>Data siswa</a>
+        <a class="{{ 'active' if request.endpoint=='classes' else '' }}" href="{{ url_for('classes') }}"><svg><use href="#i-school"/></svg>Data kelas</a>
+        <a class="{{ 'active' if request.endpoint=='cards' else '' }}" href="{{ url_for('cards') }}"><svg><use href="#i-contact"/></svg>ID card siswa</a>
+        <a class="{{ 'active' if request.endpoint=='leave' else '' }}" href="{{ url_for('leave') }}"><svg><use href="#i-file"/></svg>Surat izin</a>
+        <a class="{{ 'active' if request.endpoint in ('report','export_report') else '' }}" href="{{ url_for('report') }}"><svg><use href="#i-clipboard"/></svg>Rekap absensi</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a class="side-settings {{ 'active' if request.endpoint=='settings' else '' }}" href="{{ url_for('settings') }}"><svg><use href="#i-settings"/></svg>Pengaturan sekolah</a>
+        <div class="sidebar-note"><svg><use href="#i-shield"/></svg><b>Satu murid, satu kehadiran</b><p>Scan kartu QR murid di sekolah. Kehadiran langsung masuk rekap.</p></div>
+        <div class="profile"><span class="avatar">G</span><div><b>Guru / Operator</b><small>Ruang pengelolaan</small></div><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button type="submit" class="exit-btn" aria-label="Keluar">Keluar</button></form></div>
+      </div>
+    </aside>
+    <div class="main-shell">
+      <header class="app-topbar">
+        <button class="mobile-toggle" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar" id="toggleMenu">☰</button>
+        <div class="breadcrumb">Ruang Sekolah <span>/</span> <b>{% block crumb %}Ringkasan{% endblock %}</b></div>
+        <div class="header-status"><i></i> Sistem absensi <span class="avatar">G</span></div>
+      </header>
+      <main class="content">{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ 'error' if category=='error' else '' }}" role="status">{{ message }}</div>{% endfor %}{% block body %}{% endblock %}</main>
+      <footer class="app-footer"><span><svg><use href="#i-check-check"/></svg> SANJARA HADIR</span><span>Dibuat untuk kehadiran yang lebih bermakna.</span></footer>
+    </div>
+  </div>
+  {% else %}
+    <main class="login-container">{% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ 'error' if category=='error' else '' }}">{{ message }}</div>{% endfor %}{% block login_body %}{% endblock %}</main>
+  {% endif %}
+  <script>
+  (function(){
+    const button=document.getElementById('toggleMenu'), panel=document.getElementById('sidebar');
+    if(!button||!panel)return;
+    const close=()=>{panel.classList.remove('open');button.setAttribute('aria-expanded','false')};
+    button.addEventListener('click',()=>{const open=panel.classList.toggle('open');button.setAttribute('aria-expanded',String(open))});
+    document.querySelectorAll('.side-nav a,.side-settings').forEach(link=>link.addEventListener('click',close));
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+  })();
+  </script>
+</body>
+</html>

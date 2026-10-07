@@ -93,7 +93,33 @@ def test_csrf_and_no_default_access():
 
 def test_all_pages_render():
     c=logged_client()
-    for route in ["/","/students","/scan","/leave","/report","/settings"]:
+    for route in ["/","/students","/classes","/cards","/scan","/leave","/report","/settings"]:
         response=c.get(route)
         assert response.status_code==200,(route,response.status_code,response.data[:350])
         assert b"SANJARA" in response.data
+
+def test_work_style_dashboard_and_search():
+    c=logged_client()
+    new_student("FindThisMurId")
+    page=c.get("/")
+    assert page.status_code==200
+    assert b"SANJARA" in page.data
+    assert b"School Edition" in page.data or b"SCHOOL EDITION" in page.data
+    assert b"Mulai absensi" in page.data
+    assert b"/static/work.css" in page.data
+    assert b'Ruang Sekolah' in page.data
+    result=c.get("/?q=FindThisMurId")
+    assert result.status_code==200
+    assert b"FindThisMurId" in result.data
+    missing=c.get("/?q=UNKNOWN_STUDENT_TEST")
+    assert missing.status_code==200
+    assert b"FindThisMurId" not in missing.data
+    assert c.get("/?q="+("A"*120)).status_code==400
+    assert c.get("/classes").status_code==200
+    assert c.get("/cards").status_code==200
+
+def test_login_still_renders():
+    client=mod.app.test_client()
+    response=client.get("/login")
+    assert response.status_code==200
+    assert b'Masuk ke ruang sekolah' in response.data

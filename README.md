@@ -1,12 +1,13 @@
 # SANJARA ABSENSI
 
-> **PENTING: Versi Work asli belum dimigrasikan.** Aplikasi asli bernama **SANJARA HADIR** berada di [ChatGPT Work](https://sanjara-absensi.smpssanegerijenggron.chatgpt.site). Kode dalam repository ini adalah implementasi Flask terpisah; **bukan ekspor kode Work**. Lihat [referensi Work](docs/REFERENSI_WORK_SANJARA_HADIR.md) untuk ketentuan pemindahan asli.
+> **PENTING:** Tampilan **SANJARA HADIR · SCHOOL EDITION** di repository ini adalah **rekonstruksi** dari HTML yang diberikan pengguna, diterapkan pada backend Flask yang sebelumnya sudah dibuat. Ini **bukan** salinan source code, layanan, atau database asli ChatGPT Work. Aplikasi Work ada di [sini](https://sanjara-absensi.smpssanegerijenggron.chatgpt.site). Lihat [referensi dan keterbatasan migrasi](docs/REFERENSI_WORK_SANJARA_HADIR.md).
 
 
 Aplikasi absensi QR Code siswa SMP SSA Negeri Jenggrong Ranuyoso. **Repository ini berisi kode aplikasi, bukan data siswa**.
 
 ## Fitur
-- Login admin; tidak ada kata sandi default.
+
+**Antarmuka terbaru:** sidebar SANJARA HADIR, ringkasan (hero, statistik, tabel kehadiran), pencarian murid, navigasi Data kelas dan ID card siswa, serta tampilan responsif sesuai struktur halaman Work. Halaman kelas/ID card terhubung dengan database aplikasi Flask. Pengujian otomatis memverifikasi rendering halaman dan alur inti, tetapi belum menggantikan pengujian langsung kamera/GPS di sekolah.\n\n- Login admin; tidak ada kata sandi default.
 - Data siswa dan kelas, impor Excel, ID card dengan QR unik.
 - Scan QR dari kamera guru/petugas + verifikasi GPS area sekolah.
 - Jam absensi memakai **waktu server Asia/Jakarta**: sampai **07:00:00 WIB** tepat waktu, mulai **07:00:01 WIB** terlambat; tersimpan waktu, detik, dan menit keterlambatan.

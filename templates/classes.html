@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block crumb %}Data kelas{% endblock %}
+{% block body %}
+<div class="heading"><div><div class="eyebrow">SANJARA HADIR</div><h1>Data kelas</h1><p>Ringkasan kelas dan jumlah murid yang sudah didaftarkan.</p></div><a class="btn secondary" href="{{ url_for('students') }}">+ Tambah siswa</a></div>
+<div class="grid">{% for cls in classes %}
+  <div class="card"><div class="muted" style="font-size:12px">KELAS</div><div class="kpi" style="color:#168475">{{ cls.class_name }}</div><div class="kpi-label">{{ cls.total }} murid aktif</div><div class="actions"><a class="btn secondary" href="{{ url_for('home',class=cls.class_name) }}">Lihat kehadiran</a></div></div>
+{% else %}<div class="card" style="grid-column:1/-1"><h2>Belum ada kelas</h2><p class="muted">Kelas terisi otomatis setelah data siswa dimasukkan atau diimpor dari Excel.</p><a class="btn" href="{{ url_for('students') }}">Kelola siswa</a></div>{% endfor %}</div>
+{% endblock %}
